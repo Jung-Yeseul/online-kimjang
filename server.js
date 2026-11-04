@@ -151,6 +151,12 @@ wss.on('connection', ws => {
         send(q.ws, { t: 'help', from: p.id });
         break;
       }
+      case 'gift': {
+        if (!p.ch || !cool('gift', 1500)) return;
+        const to = int(m.to, 1, 1e9); if (!to || to === p.id || !channels[p.ch].get(to)) return;
+        toChannel(p.ch, { t: 'gift', from: p.id, to }, p.id);
+        break;
+      }
       case 'cheer': {
         if (!p.ch || !cool('cheer', 800)) return;
         const i = int(m.i, 0, CHEERS - 1); if (i === null) return;

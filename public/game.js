@@ -323,7 +323,7 @@ const npcs=NPCDEF.map((d,i)=>{const p=makePerson(d);p.def=d;p.i=i;const zk=randO
 for(let i=0;i<yardKimchi;i++)placePiece(boxFill++);
 
 let me=null,myNick='',myZone=null,time=0;
-const stats={pull:0,salt:0,sauce:0,mix:0,bury:0,eat:0,help:0};
+const stats={pull:0,salt:0,sauce:0,mix:0,bury:0,eat:0,help:0,gave:0,got:0};let inv=0;
 let R=null,lastSent='';
 const peers=new Map();
 const PEER_STYLE=[[0x6c8fb3,0xe07a5f],[0xa66b9e,0x81b29a],[0x6a994e,0xf2cc8f],[0x8d6e63,0x9fa8da],[0x457b9d,0xe9c46a],[0xb56576,0x6d9dc5]];
@@ -344,7 +344,33 @@ function sayNpc(i,t){const n=npcs[i];bubble('n'+i,n,n.name,t);n.pause=1.4;}
 function npcNear(zk){const l=npcs.filter(n=>n.zone===zk&&!n.moving);return l.length?randOf(l):randOf(npcs);}
 let toastT=0;const toastEl=$('#toast');
 function toast(t){toastEl.textContent=t;toastEl.classList.remove('show');void toastEl.offsetWidth;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),1500);}
-function did(a){if(a in stats)stats[a]++;feedAct(myNick,false,a,true);if(R)R.emit('did',{a}).catch(()=>{});if(a==='mix'){yardKimchi++;updateTags();}}
+// ---------- 김치 나눔 ----------
+let picked=null;
+function whoObj(w){return w.t==='npc'?npcs[w.i]:peers.get(w.peer);}
+function openPerson(w){const p=whoObj(w);if(!p)return;closePops();picked=w;
+  $('#ppName').textContent=p.name+(w.t==='npc'?' (이웃)':'');
+  const g=$('#ppGift');g.textContent=inv>0?'김치 나눠주기 · 내 김치 '+inv+'통':'김치 나눠주기';g.disabled=false;
+  $('#ppHelp').hidden=w.t==='peer'&&!R;$('#personPop').hidden=false;}
+const giftGeo=new THREE.BoxGeometry(0.5,0.32,0.36),giftLidGeo=new THREE.BoxGeometry(0.54,0.07,0.4),giftM=M(0xb8321f,{roughness:.5}),giftLidM=M(0x4f9a56);
+function flyGift(from,to,done){const g=new THREE.Group();g.add(new THREE.Mesh(giftGeo,giftM));const l=new THREE.Mesh(giftLidGeo,giftLidM);l.position.y=0.19;g.add(l);
+  const s=personHead(from,V(0,0,0)).setY(1.4),e=V(0,0,0);g.position.copy(s);scene.add(g);
+  tween(1.1,p=>{personHead(to,e).setY(1.4);const k=ease(p);g.position.lerpVectors(s,e,k);g.position.y+=Math.sin(p*Math.PI)*2.2;g.rotation.y=p*Math.PI*2;g.scale.setScalar(0.8+Math.sin(p*Math.PI)*0.5);},
+    ()=>{scene.remove(g);emitP('burst',e.clone().setY(1.2),14,0xb8321f);if(done)done();});}
+function giveKimchi(){const w=picked;closePops();if(!w||!me)return;const p=whoObj(w);if(!p)return;
+  if(inv<=0){toast('김치부터 버무려요');sayNpc(npcNear('mix').i,'속 버무리기 가서 한 쪽 해 와~');return;}
+  if(w.t==='peer'){if(!R){toast('지금은 연결이 끊겼어요');return;}R.emit('gift',{to:w.peer}).catch(()=>{});}
+  inv--;stats.gave++;gesture(me,'bow');feed('내가 '+(w.t==='npc'?shortName(p.name):p.name+'님')+'에게 김치 한 통 나눴어요',true);
+  flyGift(me,p,()=>{gesture(p,'hooray');
+    if(w.t==='npc'){sayNpc(w.i,randOf(['아이고 고마워라~','이거 우리 손주 줘야겠다','맛있겠다! 잘 먹을게','내년엔 내가 줄게~']));
+      if(Math.random()<.35)setTimeout(()=>{if(!me)return;flyGift(p,me,()=>{inv++;stats.got++;toast(shortName(p.name)+' 답례 김치!');gesture(me,'hooray');});sayNpc(w.i,'이건 우리 집 김치, 맛 좀 봐~');},1800);}});
+}
+function receivedGift(fromName,fromPerson){inv++;stats.got++;toast(fromName+'님이 김치 한 통 줬어요!');feed(subj(fromName,true)+' 나에게 김치 한 통 나눴어요',true);
+  if(fromPerson&&me)flyGift(fromPerson,me,()=>gesture(me,'hooray'));}
+$('#ppHelp').addEventListener('click',()=>{const w=picked;closePops();if(!w)return;if(w.t==='npc')helpNpc(w.i);else helpPeer(w.peer);});
+$('#ppGift').addEventListener('click',giveKimchi);
+$('#ppClose').addEventListener('click',closePops);
+let npcGiftT=70;
+function did(a){if(a in stats)stats[a]++;feedAct(myNick,false,a,true);if(R)R.emit('did',{a}).catch(()=>{});if(a==='mix'){yardKimchi++;inv++;updateTags();}}
 
 // ---------- panel ----------
 const pTitle=$('#pTitle'),pHint=$('#pHint'),mrow=$('#mrow'),mfill=$('#mfill'),mzone=$('#mzone'),mlab=$('#mlab'),acts=$('#acts');
@@ -413,7 +439,7 @@ function zoneCount(zk){let n=0;npcs.forEach(p=>{if(p.zone===zk)n++;});peers.forE
 function renderNav(){navEl.textContent='';ZKEYS.forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent=ZONES[k].name;const s=document.createElement('small');s.textContent=zoneCount(k)+'명';b.append(s);
   b.setAttribute('aria-current',String(myZone===k));b.addEventListener('click',()=>walkToZone(k));navEl.append(b);});}
 function updateTags(){const n=1+npcs.length+peers.size;const c=$('#crowd');c.textContent=(peers.size?'친구 '+peers.size+' · ':'')+n+'명';c.className=R&&peers.size?'live':'';$('#yard').textContent='김치 '+yardKimchi+'쪽';}
-function closePops(){['navPop','gestPop'].forEach(id=>$('#'+id).hidden=true);['navBtn','gestBtn'].forEach(id=>$('#'+id).setAttribute('aria-expanded','false'));}
+function closePops(){['navPop','gestPop','personPop'].forEach(id=>$('#'+id).hidden=true);['navBtn','gestBtn'].forEach(id=>$('#'+id).setAttribute('aria-expanded','false'));}
 function togglePop(id,bid){const open=$('#'+id).hidden;closePops();if(open){$('#'+id).hidden=false;$('#'+bid).setAttribute('aria-expanded','true');if(id==='navPop')renderNav();}}
 $('#navBtn').addEventListener('click',()=>togglePop('navPop','navBtn'));
 $('#gestBtn').addEventListener('click',()=>togglePop('gestPop','gestBtn'));
@@ -471,7 +497,7 @@ function workAt(e){
 function personAt(){const t=[];npcs.forEach(n=>t.push(n.inner));peers.forEach(p=>t.push(p.inner));const h=ray.intersectObjects(t,true)[0];if(!h)return null;let o=h.object;while(o&&!(o.userData&&o.userData.who))o=o.parent;return o?o.userData.who:null;}
 function showMarker(p){marker.position.set(p.x,0.03,p.z);marker.material.opacity=0.9;marker.scale.setScalar(1);}
 function tap(e){setNdc(e);
-  const w=personAt();if(w){if(w.t==='npc')helpNpc(w.i);else helpPeer(w.peer);return;}
+  const w=personAt();if(w){openPerson(w);return;}
   const sh=ray.intersectObjects(zoneHits)[0];if(sh){walkToZone(sh.object.userData.zone);return;}
   if(ray.ray.intersectPlane(groundPlane,hitP)){const x=Math.max(BOUND.x0,Math.min(BOUND.x1,hitP.x)),z=Math.max(BOUND.z0,Math.min(BOUND.z1,hitP.z));
     const zk=zoneAt(V(x,0,z));if(zk&&zk!==myZone){walkToZone(zk);return;}
@@ -508,6 +534,7 @@ function chirp(){if(!audio||audio.ctx.state!=='running')return;const ctx=audio.c
 
 // ---------- result ----------
 function gradeOf(){const s=stats,tot=s.salt+s.sauce+s.mix+s.pull+s.bury;
+  if(s.gave>=3)return['나눔 천사','동네 냉장고가 다 내 김치로 찼어요'];
   if(s.bury>=2)return['김장독 지킴이','올해 김치는 땅속에서 봄을 기다려요'];
   if(s.pull>=8&&s.salt<2)return['배추밭 농부','김장보다 배추 뽑는 게 더 좋았어요'];
   if(tot+s.eat<2)return['평상 지킴이','오늘은 분위기 담당이었어요'];
@@ -517,16 +544,16 @@ function gradeOf(){const s=stats,tot=s.salt+s.sauce+s.mix+s.pull+s.bury;
   if(s.sauce>=3)return['양념 장인','이모가 비법 전수하겠대요'];
   if(s.salt>=4)return['절이기 달인','배추 숨 죽이는 데는 일가견 있어요'];
   return['김장 꿈나무','내년엔 더 잘할 거예요'];}
-function showResult(exiting){const [g,sub]=gradeOf();$('#leaveBtn').hidden=!exiting;$('#closeBtn').textContent=exiting?'조금 더 있을래요':'마당으로 돌아가기';$('#rWho').textContent=(exiting?'오늘 김장 끝! · ':'')+myNick+'의 김장 일지';$('#sPull').textContent=stats.pull;$('#sBury').textContent=stats.bury;$('#grade').textContent=g;$('#gradeSub').textContent=sub;
+function showResult(exiting){const [g,sub]=gradeOf();$('#leaveBtn').hidden=!exiting;$('#closeBtn').textContent=exiting?'조금 더 있을래요':'마당으로 돌아가기';$('#rWho').textContent=(exiting?'오늘 김장 끝! · ':'')+myNick+'의 김장 일지';$('#sPull').textContent=stats.pull;$('#sBury').textContent=stats.bury;$('#sGave').textContent=stats.gave;$('#sGot').textContent=stats.got;$('#grade').textContent=g;$('#gradeSub').textContent=sub;
   $('#sSalt').textContent=stats.salt;$('#sSauce').textContent=stats.sauce;$('#sMix').textContent=stats.mix;$('#sEat').textContent=stats.eat;
-  $('#shareText').value='🥬 온라인 김장 일지 · '+myNick+'\n배추 '+stats.pull+'포기 뽑고, '+stats.salt+'쪽 절이고, 양념 '+stats.sauce+'통 만들고, 김치 '+stats.mix+'쪽 버무리고, 김장독 '+stats.bury+'개 묻고, 수육 '+stats.eat+'점 먹음\n오늘 칭호: '+g+'\n'+location.origin+'\n#온라인김장 #김장품앗이';
+  $('#shareText').value='🥬 온라인 김장 일지 · '+myNick+'\n배추 '+stats.pull+'포기 뽑고, '+stats.salt+'쪽 절이고, 양념 '+stats.sauce+'통 만들고, 김치 '+stats.mix+'쪽 버무리고, 김장독 '+stats.bury+'개 묻고, 수육 '+stats.eat+'점 먹음'+(stats.gave||stats.got?'\n김치 '+stats.gave+'통 나누고 '+stats.got+'통 받음':'')+'\n오늘 칭호: '+g+'\n'+location.origin+'\n#온라인김장 #김장품앗이';
   $('#copyNote').textContent='';$('#result').hidden=false;}
 $('#logBtn').addEventListener('click',()=>{if(me){closePops();showResult(false);}});
 $('#exitBtn').addEventListener('click',()=>{if(me){closePops();showResult(true);}});
 $('#leaveBtn').addEventListener('click',exitYard);
 function exitYard(){if(!me)return;netSend({t:'leave'});NET.ch=0;R=null;clearPeers();clearActivity();closePops();
   scene.remove(me.g);bubbles.forEach(b=>b.el.hidden=true);me=null;myZone=null;$('#panel').hidden=true;$('#result').hidden=true;$('#chanBtn').hidden=true;$('#tip').hidden=true;
-  for(const k in stats)stats[k]=0;$('#hud').classList.add('pre');$('#intro').hidden=false;setNetState(NET.open?'지금 '+NET.total+'명이 김장 중이에요':'혼자서도 들어갈 수 있어요');}
+  for(const k in stats)stats[k]=0;inv=0;$('#hud').classList.add('pre');$('#intro').hidden=false;setNetState(NET.open?'지금 '+NET.total+'명이 김장 중이에요':'혼자서도 들어갈 수 있어요');}
 $('#closeBtn').addEventListener('click',()=>{$('#result').hidden=true;});
 $('#copyBtn').addEventListener('click',()=>{const t=$('#shareText').value,note=$('#copyNote');const ok=()=>note.textContent='복사했어요! 단톡방에 붙여넣기 하세요';const bad=()=>note.textContent='복사가 안 돼요. 화면을 캡처해서 공유해 주세요';
   const fb=()=>{const ta=$('#shareText');ta.style.left='0';ta.select();try{document.execCommand('copy')?ok():bad();}catch(_){bad();}ta.style.left='-9999px';};
@@ -558,7 +585,7 @@ const NET={ws:null,open:false,id:0,ch:0,retry:0,cap:30,counts:[],total:0};
 function netSend(o){if(NET.open&&NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify(o));}
 const ROOM={
   emit(topic,data){if(!NET.open||!NET.ch)return Promise.reject({code:'offline'});
-    if(topic==='help')netSend({t:'help',to:Number(data.to)});else if(topic==='did')netSend({t:'did',a:data.a});else if(topic==='cheer')netSend({t:'cheer',i:data.i|0});
+    if(topic==='help')netSend({t:'help',to:Number(data.to)});else if(topic==='gift')netSend({t:'gift',to:Number(data.to)});else if(topic==='did')netSend({t:'did',a:data.a});else if(topic==='cheer')netSend({t:'cheer',i:data.i|0});
     return Promise.resolve();},
   presence(){return Promise.resolve();}
 };
@@ -598,6 +625,7 @@ function onMsg(m){
       if(a==='mix'){yardKimchi++;updateTags();flyPiece(personHead(v,V(0,0,0)).setY(0.8));}
       if(a==='eat'||a==='wrap'||a==='drink')bubble('p'+m.id,v,v.name,a==='drink'?'캬~':'냠');break;}
     case 'help':{const v=peers.get(m.from);receivedHelp(v?v.name:'친구');if(v)gesture(v,'wave');break;}
+    case 'gift':{const a=peers.get(m.from);if(m.to===NET.id){receivedGift(a?a.name:'친구',a);break;}const b=peers.get(m.to);if(a&&b){flyGift(a,b,()=>gesture(b,'hooray'));if(Math.random()<.6)feed(subj(a.name,true)+' '+b.name+'님에게 김치를 나눴어요');}break;}
     case 'cheer':{const v=peers.get(m.id);if(!v)break;const i=m.i|0;if(i>=0&&i<3)gesture(v,GESTS[i].k);else if(i>=3&&i<6)bubble('p'+m.id,v,v.name,PHRASES[i-3]);break;}
     case 'kimchi':setNation(m.n);break;
   }
@@ -655,6 +683,8 @@ function loop(){
   if(cab&&cab.dirty)compose(cab);
   if(me&&cab&&(myZone==='salt'||myZone==='mix')&&$('#result').hidden){npcHelpT-=dt;if(npcHelpT<=0){npcHelpT=18+Math.random()*12;
     const here=npcs.filter(n=>n.zone===myZone&&!n.moving);if(here.length&&(myZone==='mix'?cab.coverage<0.85:cab.saltAmt<0.45)){const n=randOf(here);sayNpc(n.i,'내가 좀 거들게~');const g=gen;let k=0;const iv=setInterval(()=>{if(g!==gen||k++>=5){clearInterval(iv);return;}helpStamp();},260);}}}
+  if(me&&stats.mix>0&&$('#result').hidden){npcGiftT-=dt;if(npcGiftT<=0){npcGiftT=80+Math.random()*60;const n=npcs[1];
+    sayNpc(1,'이거 가져가~ 우리 집 김치');flyGift(n,me,()=>{inv++;stats.got++;toast('이모가 김치 한 통 줬어요!');gesture(me,'hooray');});}}
   presT-=dt;if(presT<=0){presT=0.6;pushPresence(false);}
   navT-=dt;if(navT<=0){navT=3;renderNav();}
   chirpT-=dt;if(chirpT<=0){chirpT=6+Math.random()*10;chirp();}

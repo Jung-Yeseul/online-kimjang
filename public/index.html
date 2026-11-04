@@ -86,6 +86,8 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
 .pop{pointer-events:auto;width:min(440px,100%);background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(40,30,20,.2);padding:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;animation:rise .25s ease}
 .pop button{font-size:14px;padding:8px 13px;background:rgba(255,255,255,.75);color:var(--ink);box-shadow:none;border:1px solid var(--line)}
 .pop button[aria-current="true"]{background:var(--leaf);color:var(--paper);border-color:transparent}
+.pop .pname{flex:1 0 100%;margin:0 0 2px;text-align:center;font-family:var(--font-d);font-size:15px}
+.pop button.gift{background:var(--chili);color:var(--paper);border-color:transparent}
 .pop button small{font-family:var(--font-b);font-size:11px;opacity:.7;margin-left:4px}
 .dock{pointer-events:auto;display:flex;gap:10px}
 .dock button{display:flex;flex-direction:column;align-items:center;gap:2px;width:64px;padding:9px 0 7px;border-radius:18px;font-size:12px}
@@ -120,7 +122,7 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
 .card .eb{font-family:var(--font-d);font-size:13px;letter-spacing:.1em;color:var(--leaf);margin:0}
 .card .sub{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
 .grade{font-family:var(--font-d);font-size:clamp(30px,8vw,38px);color:var(--chili);margin:0;line-height:1.1;text-wrap:balance}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .stats div{border-radius:14px;padding:8px 4px;background:#f5ede0}
 .stats b{display:block;font-family:var(--font-d);font-weight:400;font-size:22px;font-variant-numeric:tabular-nums}
 .stats small{color:var(--muted);font-size:11px}
@@ -171,6 +173,7 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
     </section>
     <nav class="pop" id="navPop" hidden aria-label="자리로 걸어가기"><div id="nav" style="display:contents"></div></nav>
     <div class="pop" id="gestPop" hidden aria-label="몸짓과 인사"><div id="gest" style="display:contents"></div></div>
+    <div class="pop" id="personPop" hidden><p class="pname" id="ppName"></p><button id="ppGift" type="button" class="gift">김치 나눠주기</button><button id="ppHelp" type="button">거들기</button><button id="ppClose" type="button">닫기</button></div>
     <div class="dock">
       <button class="soft" id="navBtn" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>자리</button>
       <button class="soft" id="gestBtn" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>인사</button>
@@ -206,6 +209,8 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
       <div><b id="sMix">0</b><small>버무린 김치</small></div>
       <div><b id="sBury">0</b><small>묻은 김장독</small></div>
       <div><b id="sEat">0</b><small>먹은 수육</small></div>
+      <div><b id="sGave">0</b><small>나눈 김치</small></div>
+      <div><b id="sGot">0</b><small>받은 김치</small></div>
     </div>
     <div class="btns">
       <button id="copyBtn" type="button">일지 복사해서 자랑하기</button>
