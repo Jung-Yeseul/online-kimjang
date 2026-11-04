@@ -586,6 +586,20 @@ function workAt(e){
     sauce.lastA=a;updatePanelMeter();return true;}
   return false;}
 function personAt(){const t=[];npcs.forEach(n=>t.push(n.inner));peers.forEach(p=>t.push(p.inner));const h=ray.intersectObjects(t,true)[0];if(!h)return null;let o=h.object;while(o&&!(o.userData&&o.userData.who))o=o.parent;return o?o.userData.who:null;}
+// 화면 돌리기 버튼 + 키보드 (←→ 돌리기, ↑↓ 확대)
+function rotView(d){camGoal.yaw+=d;}
+function zoomView(k){camGoal.dist=Math.max(4.5,Math.min(24,camGoal.dist*k));}
+function homeView(){if(!me)return;camGoal.yaw=me.g.rotation.y+Math.PI;camGoal.pitch=myZone?0.92:0.75;camGoal.dist=myZone?ZONES[myZone].dist:11;}
+let holdT=null;
+function holdBtn(id,fn){const b=$('#'+id);const start=e=>{e.preventDefault();fn();clearInterval(holdT);holdT=setInterval(fn,140);};const end=()=>{clearInterval(holdT);holdT=null;};
+  b.addEventListener('pointerdown',start);['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,end));b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});}
+holdBtn('vLeft',()=>rotView(Math.PI/10));holdBtn('vRight',()=>rotView(-Math.PI/10));holdBtn('vIn',()=>zoomView(0.88));holdBtn('vOut',()=>zoomView(1.14));
+$('#vHome').addEventListener('click',homeView);
+addEventListener('keydown',e=>{if(!me||e.target&&(e.target.tagName==='INPUT'))return;
+  if(e.key==='ArrowLeft'||e.key==='q'||e.key==='Q'){rotView(Math.PI/12);e.preventDefault();}
+  else if(e.key==='ArrowRight'||e.key==='e'||e.key==='E'){rotView(-Math.PI/12);e.preventDefault();}
+  else if(e.key==='ArrowUp'){zoomView(0.9);e.preventDefault();}
+  else if(e.key==='ArrowDown'){zoomView(1.11);e.preventDefault();}});
 function showMarker(p){marker.position.set(p.x,0.03,p.z);marker.material.opacity=0.9;marker.scale.setScalar(1);}
 function tap(e){setNdc(e);
   const w=personAt();if(w){openPerson(w);return;}
@@ -605,7 +619,7 @@ canvas.addEventListener('pointermove',e=>{
   const prev=ptrs.get(e.pointerId);if(!prev)return;const dx=e.clientX-prev.x,dy=e.clientY-prev.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(mode==='pinch'&&ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinchD>0)camGoal.dist=Math.max(4.5,Math.min(24,camGoal.dist*pinchD/d));pinchD=d;return;}
   if(mode==='paint'){workAt(e);return;}
-  if(mode==='orbit'&&down){down.moved+=Math.abs(dx)+Math.abs(dy);camGoal.yaw-=dx*0.006;camGoal.pitch=Math.max(0.3,Math.min(1.35,camGoal.pitch+dy*0.005));}});
+  if(mode==='orbit'&&down){down.moved+=Math.abs(dx)+Math.abs(dy);camGoal.yaw-=dx*0.009;camGoal.pitch=Math.max(0.3,Math.min(1.35,camGoal.pitch+dy*0.007));}});
 function endPtr(e){const wasOrbit=mode==='orbit'&&down&&ptrs.size===1;
   if(wasOrbit&&me&&down.moved<8&&performance.now()-down.t<500)tap(e);
   ptrs.delete(e.pointerId);if(ptrs.size===0){mode=null;down=null;lastUV=null;sauce.lastA=null;canvas.classList.remove('dragging');}else if(mode==='pinch'){mode='orbit-hold';}}
@@ -742,7 +756,12 @@ $('#invClose').addEventListener('click',()=>{$('#inviteSheet').hidden=true;});
 $('#invSwap').addEventListener('click',()=>{invNoteI=(invNoteI+1)%INV_NOTES.length;$('#invNote').textContent=INV_NOTES[invNoteI];});
 $('#invCopy').addEventListener('click',invCopy);$('#invSave').addEventListener('click',invSave);$('#invShare').addEventListener('click',invShare);
 
-try{const saved=localStorage.getItem('kimjang-nick');if(saved)nickInput.value=saved;}catch(_){}
+const NICK_ADJ=['아삭한','매콤한','짭짤한','새콤한','시원한','포근한','느긋한','야무진','칼칼한','고소한','통통한','부지런한','손빠른','배부른'];
+const NICK_NOUN=['배추','무채','쪽파','고무장갑','수육','김장독','양념','굴보쌈','막걸리','깍두기','총각무','갓김치','새우젓','동치미'];
+function randomNick(){for(let k=0;k<20;k++){const n=randOf(NICK_ADJ)+randOf(NICK_NOUN);if(n.length<=8)return n;}return '김장러'+(100+Math.random()*900|0);}
+try{const saved=localStorage.getItem('kimjang-nick');nickInput.value=saved||randomNick();}catch(_){nickInput.value=randomNick();}
+$('#diceBtn').addEventListener('click',()=>{nickInput.value=randomNick();$('#nickErr').textContent='';});
+nickInput.addEventListener('focus',()=>{try{nickInput.select();}catch(_){}});
 let pendingNick='',soloTimer=0;
 function enterYard(n){
   if(me)return;myNick=n;try{localStorage.setItem('kimjang-nick',n);}catch(_){}

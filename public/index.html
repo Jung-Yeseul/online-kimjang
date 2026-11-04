@@ -50,7 +50,13 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
 #hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-bottom,0px))}
-#hud.pre .dock,#hud.pre .icons,#hud.pre .status,#hud.pre .feed,#hud.pre .brand{display:none}
+#hud.pre .dock,#hud.pre .icons,#hud.pre .status,#hud.pre .feed,#hud.pre .brand,#hud.pre .viewctl{display:none}
+/* view controls: small round 3D buttons on the right edge */
+.viewctl{position:fixed;right:max(12px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+.viewctl button{width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:14px}
+.viewctl button svg{width:18px;height:18px}
+.viewctl .sep{height:4px}
+.nickrow .dice{flex:0 0 auto;width:40px;padding:0;font-size:18px;line-height:1}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .brand{min-width:0}
 .brand h1{font-family:var(--font-d);font-weight:400;font-size:22px;margin:0;color:var(--paper);text-shadow:0 1px 0 rgba(0,0,0,.18),0 2px 10px rgba(40,30,20,.35)}
@@ -210,6 +216,15 @@ button:disabled,button:disabled:active{background:linear-gradient(180deg,#eee6dc
       <button id="exitBtn" class="soft" type="button">나가기</button>
     </div>
   </div>
+<div class="viewctl" id="viewctl" aria-label="화면 돌리기">
+  <button class="soft" id="vLeft" type="button" aria-label="왼쪽으로 돌리기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg></button>
+  <button class="soft" id="vRight" type="button" aria-label="오른쪽으로 돌리기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg></button>
+  <span class="sep"></span>
+  <button class="soft" id="vIn" type="button" aria-label="가까이"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="soft" id="vOut" type="button" aria-label="멀리"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+  <span class="sep"></span>
+  <button class="soft" id="vHome" type="button" aria-label="내 캐릭터 뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></button>
+</div>
   <div class="bottom">
     <p id="tip" hidden>바닥을 누르면 걸어가요 · 끌면 둘러봐요 · 표지판을 누르면 그 자리로</p>
     <section class="panel" id="panel" hidden>
@@ -239,6 +254,7 @@ button:disabled,button:disabled:active{background:linear-gradient(180deg,#eee6dc
     <p class="sub" id="introSub">감나무 아래 한옥 마당에서 배추 뽑고, 절이고, 버무리고,<br>김장독 묻고, 수육 먹어요. 허리는 안 아파요.</p>
     <div class="nickrow">
       <input id="nickInput" maxlength="8" autocomplete="off" placeholder="오늘 김장 이름 (2~8글자)" aria-label="오늘 김장 이름">
+      <button type="button" id="diceBtn" class="soft dice" aria-label="다른 이름 뽑기" title="다른 이름 뽑기">🎲</button>
       <button type="submit" id="enterBtn">들어가기</button>
     </div>
     <p class="err" id="nickErr"></p>
