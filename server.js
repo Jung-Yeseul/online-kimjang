@@ -17,9 +17,9 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const BOOT_VERSION = Date.now().toString(36);
 
 // 클라이언트와 맞춰야 하는 목록
-const ACTS = ['salt', 'sauce', 'mix', 'eat', 'wrap', 'drink'];
+const ACTS = ['pull', 'salt', 'sauce', 'mix', 'bury', 'eat', 'wrap', 'drink'];
 const CHEERS = 6;          // 몸짓 3개 + 인사말 3개
-const ZONES = ['rest', 'salt', 'sauce', 'mix', 'eat'];
+const ZONES = ['field', 'salt', 'sauce', 'mix', 'bury', 'eat', 'rest'];
 const XY = 120;            // 좌표 범위 (마당 ±12 유닛 × 10)
 const COLORS = ['#6c8fb3', '#a66b9e', '#6a994e', '#8d6e63', '#457b9d', '#b56576', '#e07a5f', '#3d8a8a'];
 
