@@ -50,7 +50,17 @@ const server = http.createServer((req, res) => {
       'Cache-Control': ['.html', '.js', '.css'].includes(ext) ? 'no-cache' : 'public, max-age=3600',
       'X-Content-Type-Options': 'nosniff',
     });
-    if (ext === '.html') data = data.toString('utf8').replace(/(["'])\/(game\.js)\1/g, `$1/$2?v=${BOOT_VERSION}$1`);
+    if (ext === '.html') {
+      data = data.toString('utf8').replace(/(["'])\/(game\.js)\1/g, `$1/$2?v=${BOOT_VERSION}$1`);
+      // 초대 링크(?from=이름&m=마당)로 들어오면 카톡·스레드 미리보기 제목을 "OO네 김장 품앗이 모집"으로 바꿔요
+      const from = cleanNick(url.searchParams.get('from') || '');
+      if (from.nick) {
+        const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const ch = int(Number(url.searchParams.get('m')), 1, CHANNELS);
+        data = data.replace('<meta property="og:title" content="온라인 김장">', `<meta property="og:title" content="${esc(from.nick)}네 김장 품앗이 모집 🥬">`)
+          .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(from.nick)}님이 김장하러 오래요. ${ch ? ch + '번 마당에서 ' : ''}수육 삶아놨대요. 허리는 안 아파요.">`);
+      }
+    }
     res.end(data);
   });
 });
