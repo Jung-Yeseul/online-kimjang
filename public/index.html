@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>온라인 김장</title>
+<meta name="description" content="감나무 아래 한옥 마당에서 다 같이 배추 절이고, 양념 만들고, 버무리고, 수육 먹는 온라인 김장. 허리는 안 아파요.">
+<meta property="og:title" content="온라인 김장">
+<meta property="og:description" content="허리 안 아픈 김장, 다 같이 한 마당에서. 배추 절이고 양념 치대고 수육 먹으러 와요.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#a9cbe0">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+body{font-size:14px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+/* Layout: free-roam 3D 한옥 김장 마당 (tap floor to walk, drag to look); sticker HUD — brand top-left, live feed top-right, panel + gesture bar + station nav at the bottom */
+:root{
+  --ink:#2b211c;
+  --paper:#fffaf1;
+  --chili:#c2321f;
+  --leaf:#4f8a35;
+  --core:#f1e3a0;
+  --muted:#76665b;
+  --sky-top:#a9cbe0;
+  --sky-bot:#f3d6b4;
+  --font-d:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-b:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:linear-gradient(var(--sky-top),var(--sky-bot));color:var(--ink);font-family:var(--font-b);-webkit-user-select:none;user-select:none}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#scene.dragging{cursor:grabbing}
+#bubbles{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.bub{position:absolute;left:0;top:0;max-width:200px;background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:5px 10px;font-size:14px;line-height:1.35;box-shadow:0 3px 0 var(--ink);animation:pop .25s ease}
+.bub b{display:block;font-family:var(--font-d);font-weight:400;font-size:12px;color:var(--chili)}
+#hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;gap:8px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-bottom,0px))}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.brand{min-width:0;pointer-events:auto}
+.brand h1{font-family:var(--font-d);font-weight:400;font-size:clamp(24px,4.6vw,34px);margin:0;line-height:1;text-shadow:0 2px 0 var(--paper)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:13px;font-variant-numeric:tabular-nums;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:2px 10px;font-family:var(--font-b);color:var(--ink);box-shadow:none}
+button.tag{cursor:pointer}
+.tag.live{background:var(--leaf);color:var(--paper)}
+.tag.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--core);margin-right:6px;vertical-align:1px;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:0}
+.side .row{display:flex;gap:6px;pointer-events:auto}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;width:min(270px,52vw)}
+.feed li{background:rgba(255,250,241,.92);border:1.5px solid var(--ink);border-radius:12px;padding:4px 9px;font-size:13px;line-height:1.35;animation:slide .35s ease;transition:opacity .8s;text-align:right}
+.feed li.me{background:var(--core)}
+.feed li.out{opacity:0}
+@keyframes slide{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+button{font-family:var(--font-d);font-size:16px;border:2px solid var(--ink);border-radius:14px;padding:9px 16px;cursor:pointer;background:var(--chili);color:var(--paper);box-shadow:0 4px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+button:disabled{background:#d9cfc4;color:var(--muted);cursor:default;box-shadow:0 4px 0 #a79a8d;border-color:#a79a8d}
+button:focus-visible{outline:3px solid var(--leaf);outline-offset:3px}
+button.ghost{background:var(--paper);color:var(--ink);font-size:14px;padding:6px 12px}
+button.leaf{background:var(--leaf)}
+#toast{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%);font-family:var(--font-d);font-size:clamp(20px,5vw,30px);color:var(--paper);-webkit-text-stroke:1px var(--ink);text-shadow:0 3px 0 var(--ink);pointer-events:none;opacity:0;transition:opacity .3s,transform .6s;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,-80%)}
+.bottom{display:grid;gap:8px;justify-items:center}
+.panel{pointer-events:auto;width:min(480px,100%);box-sizing:border-box;background:var(--paper);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:11px 14px;display:grid;gap:8px}
+.panel h2{font-family:var(--font-d);font-weight:400;font-size:19px;margin:0}
+.panel p{margin:0;font-size:14px;line-height:1.45;color:var(--muted)}
+.mrow{display:flex;align-items:center;gap:10px}
+.meter{position:relative;flex:1;height:14px;border:2px solid var(--ink);border-radius:999px;background:#efe6d8;overflow:hidden}
+.meter .zone{position:absolute;top:0;bottom:0;left:55%;width:25%;background:rgba(79,138,53,.35);border-left:2px dashed var(--leaf);border-right:2px dashed var(--leaf)}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#8fb0c6;transition:width .12s}
+.mlab{font-family:var(--font-d);font-size:14px;min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.acts:empty{display:none}
+.acts button{flex:1 1 auto}
+.acts button.ing{flex:0 1 auto;font-size:14px;padding:6px 10px;background:var(--paper);color:var(--ink)}
+.acts button.ing.used{background:var(--core);text-decoration:line-through}
+.bar{pointer-events:auto;display:flex;gap:6px;overflow-x:auto;max-width:100%;padding:2px 2px 6px;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
+.bar button{flex:0 0 auto;background:var(--paper);color:var(--ink);font-size:14px;padding:6px 12px;box-shadow:0 3px 0 var(--ink)}
+.bar button[aria-current="true"]{background:var(--leaf);color:var(--paper)}
+.bar button small{font-family:var(--font-b);font-size:12px;opacity:.75;margin-left:4px;font-variant-numeric:tabular-nums}
+.bar.gest button{background:var(--core)}
+.sheet{position:fixed;inset:0;display:grid;place-items:center;background:rgba(43,33,28,.45);z-index:20;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px;overflow-y:auto}
+.card{width:min(420px,100%);box-sizing:border-box;background:var(--paper);border:2px solid var(--ink);border-radius:22px;box-shadow:0 7px 0 var(--ink);padding:24px 22px;display:grid;gap:14px;text-align:center;animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.card h2{font-family:var(--font-d);font-weight:400;font-size:clamp(36px,9vw,48px);margin:0;line-height:1.05;text-wrap:balance}
+.card h2 em{font-style:normal;color:var(--chili)}
+.card .sub{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
+.card label{font-family:var(--font-d);font-size:15px;text-align:left;display:grid;gap:6px}
+.card input{font-family:var(--font-b);font-size:18px;padding:10px 12px;border:2px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+.card input:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.card .err{color:var(--chili);font-size:13px;margin:0;min-height:1em;text-align:left}
+.card .how{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.eyebrow{font-family:var(--font-d);font-size:14px;letter-spacing:.08em;color:var(--leaf);margin:0}
+.grade{font-family:var(--font-d);font-size:clamp(30px,8vw,40px);color:var(--chili);margin:0;line-height:1.1;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stats div{border:2px solid var(--ink);border-radius:14px;padding:8px 4px;background:#fff}
+.stats b{display:block;font-family:var(--font-d);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums}
+.stats small{color:var(--muted);font-size:12px}
+.btns{display:grid;gap:10px}
+#copyNote{font-size:13px;color:var(--leaf);min-height:1em;margin:0}
+#shareText{position:absolute;left:-9999px}
+#nogl{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;font-size:16px}
+@media (max-width:520px){.feed{width:min(190px,48vw)}.feed li:nth-child(n+4){display:none}.panel p{font-size:13px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;max-height:50vh;overflow-y:auto;padding:2px}
+.chgrid button{font-size:15px;padding:8px 6px;background:var(--paper);color:var(--ink)}
+.chgrid button[aria-current="true"]{background:var(--leaf);color:var(--paper)}
+.chgrid button small{display:block;font-family:var(--font-b);font-size:12px;opacity:.8}
+.net{font-size:13px;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+
+<canvas id="scene" aria-label="김장 마당 3D 화면. 바닥을 누르면 걸어가고, 끌면 둘러봐요"></canvas>
+<div id="nogl" hidden><p>이 브라우저에서는 3D 마당을 열 수 없어요. 크롬이나 사파리 최신 버전으로 열어 주세요.</p></div>
+<div id="bubbles"></div>
+
+<div id="hud">
+  <div class="top">
+    <div class="brand">
+      <h1>온라인 김장</h1>
+      <div class="tags">
+        <button class="tag" id="chanBtn" type="button" hidden>1번 마당</button>
+        <span class="tag" id="crowd">마당에 7명</span>
+        <span class="tag" id="yard">마당 김치 0쪽</span>
+        <span class="tag" id="nation" hidden>전국 김치 0쪽</span>
+      </div>
+    </div>
+    <div class="side">
+      <div class="row"><button id="soundBtn" class="ghost" type="button">소리 켜기</button><button id="logBtn" class="ghost" type="button">김장 일지</button></div>
+      <ul class="feed" id="feed" aria-live="polite"></ul>
+    </div>
+  </div>
+  <div class="bottom">
+    <section class="panel" id="panel">
+      <h2 id="pTitle">마당 산책 중</h2>
+      <p id="pHint">바닥을 누르면 걸어가요. 화면을 끌면 둘러보고, 표지판을 누르면 그 자리로 가요.</p>
+      <div class="mrow" id="mrow" hidden>
+        <div class="meter"><div class="zone" id="mzone"></div><div class="fill" id="mfill"></div></div>
+        <span class="mlab" id="mlab"></span>
+      </div>
+      <div class="acts" id="acts"></div>
+    </section>
+    <div class="bar gest" id="gest" aria-label="몸짓과 인사"></div>
+    <nav class="bar" id="nav" aria-label="자리로 걸어가기"></nav>
+  </div>
+</div>
+<div id="toast"></div>
+
+<div class="sheet" id="intro">
+  <form class="card" id="introForm">
+    <p class="eyebrow">2026 김장철 품앗이 마당</p>
+    <h2>온라인 <em>김장</em></h2>
+    <p class="sub">감나무 아래 한옥 마당에서 배추 절이고, 양념 만들고, 버무리고, 수육 먹어요. 허리는 안 아파요.</p>
+    <label for="nickInput">오늘 김장 이름
+      <input id="nickInput" maxlength="8" autocomplete="off" placeholder="2~8글자">
+    </label>
+    <p class="err" id="nickErr"></p>
+    <p class="net" id="netState">마당 문 여는 중…</p>
+    <p class="how">바닥을 누르면 걸어가요 · 화면을 끌면 둘러봐요 · 휠이나 두 손가락으로 확대</p>
+    <div class="btns"><button type="submit">고무장갑 끼고 들어가기</button></div>
+  </form>
+</div>
+
+<div class="sheet" id="result" hidden>
+  <div class="card">
+    <p class="eyebrow" id="rWho">오늘 김장 일지</p>
+    <p class="grade" id="grade">김장 꿈나무</p>
+    <p class="sub" id="gradeSub"></p>
+    <div class="stats">
+      <div><b id="sSalt">0</b><small>절인 배추(쪽)</small></div>
+      <div><b id="sSauce">0</b><small>만든 양념(통)</small></div>
+      <div><b id="sMix">0</b><small>버무린 김치(쪽)</small></div>
+      <div><b id="sEat">0</b><small>먹은 수육(점)</small></div>
+    </div>
+    <div class="btns">
+      <button id="copyBtn" type="button">일지 복사해서 자랑하기</button>
+      <p id="copyNote"></p>
+      <button id="closeBtn" class="ghost" type="button">마당으로 돌아가기</button>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="chanSheet" hidden>
+  <div class="card">
+    <p class="eyebrow">마당 옮기기</p>
+    <p class="sub">사람 있는 마당으로 가면 같이 김장해요. 숫자는 지금 그 마당에 있는 사람 수예요.</p>
+    <div class="chgrid" id="chGrid"></div>
+    <div class="btns"><button id="chClose" class="ghost" type="button">그대로 있기</button></div>
+  </div>
+</div>
+<textarea id="shareText" aria-hidden="true" tabindex="-1"></textarea>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/game.js"></script>
+</body>
+</html>

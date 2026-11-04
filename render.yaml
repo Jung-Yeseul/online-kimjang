@@ -1,0 +1,14 @@
+# Render 블루프린트: 이 파일이 있으면 Render가 설정을 자동으로 읽어요.
+services:
+  - type: web
+    name: online-kimjang
+    runtime: node
+    plan: free            # 사람 몰릴 땐 starter(월 $7)로 올리면 잠들지 않아요
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: CHANNELS     # 마당 개수
+        value: "30"
+      - key: CAPACITY     # 마당당 정원
+        value: "30"
