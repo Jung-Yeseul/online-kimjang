@@ -72,7 +72,8 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
 @keyframes slide{from{transform:translateY(-6px);opacity:0}to{transform:none;opacity:1}}
 .icons{display:flex;gap:8px;pointer-events:auto}
 .icons button{font-size:13px;padding:7px 12px}
-.bottom{display:grid;gap:10px;justify-items:center}
+.bottom{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;justify-items:center}
+.bottom>*{max-width:100%}
 #tip{font-size:13px;color:var(--paper);text-shadow:0 1px 4px rgba(30,20,10,.8);margin:0;text-align:center;transition:opacity .8s}
 .panel{pointer-events:auto;width:min(440px,100%);background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(40,30,20,.2);padding:12px 14px;display:grid;gap:8px;animation:rise .3s ease}
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
@@ -106,16 +107,19 @@ button.leaf{background:var(--leaf);box-shadow:0 4px 12px rgba(50,90,30,.28)}
 .intro{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;pointer-events:none;
   background:linear-gradient(to bottom,rgba(20,30,45,0) 35%,rgba(30,22,15,.55));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px calc(36px + env(safe-area-inset-bottom,0px))}
-.introBox{pointer-events:auto;width:min(420px,100%);display:grid;gap:12px;text-align:center}
+.introBox{pointer-events:auto;width:100%;max-width:420px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;text-align:center}
+.introBox>*{min-width:0}
 .eyebrow{font-family:var(--font-d);font-size:13px;letter-spacing:.14em;color:var(--core);margin:0;text-shadow:0 1px 6px rgba(0,0,0,.4)}
-.title3d{font-family:var(--font-d);font-weight:400;font-size:clamp(56px,15vw,92px);line-height:1;margin:0;color:#fff7e8;letter-spacing:.02em;
+.title3d{font-family:var(--font-d);font-weight:400;font-size:clamp(48px,14vw,92px);white-space:nowrap;line-height:1;margin:0;color:#fff7e8;letter-spacing:.02em;
   text-shadow:0 1px 0 #e9d3a8,0 2px 0 #e2c796,0 3px 0 #d9b984,0 4px 0 #cfaa72,0 5px 0 #c29a62,0 6px 0 #b48a54,0 7px 1px rgba(0,0,0,.25),0 12px 20px rgba(30,15,5,.45),0 24px 40px rgba(30,15,5,.3);
   animation:float 5s ease-in-out infinite}
 .title3d em{font-style:normal;color:#ffd2c4;text-shadow:0 1px 0 #e3a08f,0 2px 0 #d88d7a,0 3px 0 #cc7a66,0 4px 0 #bf6853,0 5px 0 #b15843,0 6px 0 #a24a36,0 7px 1px rgba(0,0,0,.25),0 12px 20px rgba(30,15,5,.45),0 24px 40px rgba(30,15,5,.3)}
 @keyframes float{50%{transform:translateY(-6px) rotate(-.6deg)}}
-.intro .sub{margin:0;color:#fff4e6;font-size:15px;line-height:1.5;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.intro .sub{margin:0;color:#fff4e6;font-size:15px;line-height:1.5;text-shadow:0 1px 6px rgba(0,0,0,.5);word-break:keep-all;text-wrap:balance}
+@media (max-width:520px){.intro .sub br{display:none}.intro .sub{font-size:14px}}
 .nickrow{display:flex;gap:8px;background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.6);border-radius:999px;padding:6px;box-shadow:0 12px 30px rgba(20,10,5,.3)}
-.nickrow input{flex:1;min-width:0;font-family:var(--font-b);font-size:17px;border:0;background:transparent;padding:8px 14px;color:var(--ink);outline:none;-webkit-user-select:text;user-select:text}
+.nickrow{width:100%;min-width:0}
+.nickrow input{flex:1 1 0;width:0;min-width:0;font-family:var(--font-b);font-size:17px;border:0;background:transparent;padding:8px 14px;color:var(--ink);outline:none;-webkit-user-select:text;user-select:text}
 .nickrow button{flex:0 0 auto}
 .nickrow:focus-within{box-shadow:0 0 0 3px rgba(79,138,53,.6),0 12px 30px rgba(20,10,5,.3)}
 .err{color:#ffd2c4;font-size:13px;margin:0;min-height:1em;text-shadow:0 1px 4px rgba(0,0,0,.6)}
@@ -251,9 +255,9 @@ button:disabled,button:disabled:active{background:linear-gradient(180deg,#eee6dc
   <form class="introBox" id="introForm">
     <p class="eyebrow" id="introEb">2026 김장철 · 품앗이 마당</p>
     <h2 class="title3d">온라인 <em>김장</em></h2>
-    <p class="sub" id="introSub">감나무 아래 한옥 마당에서 배추 뽑고, 절이고, 버무리고,<br>김장독 묻고, 수육 먹어요. 허리는 안 아파요.</p>
+    <p class="sub" id="introSub">감나무 아래 한옥 마당에서 배추 뽑고, 절이고, 버무리고, <br>김장독 묻고, 수육 먹어요. 허리는 안 아파요.</p>
     <div class="nickrow">
-      <input id="nickInput" maxlength="8" autocomplete="off" placeholder="오늘 김장 이름 (2~8글자)" aria-label="오늘 김장 이름">
+      <input id="nickInput" size="1" maxlength="8" autocomplete="off" placeholder="오늘 김장 이름 (2~8글자)" aria-label="오늘 김장 이름">
       <button type="button" id="diceBtn" class="soft dice" aria-label="다른 이름 뽑기" title="다른 이름 뽑기">🎲</button>
       <button type="submit" id="enterBtn">들어가기</button>
     </div>
